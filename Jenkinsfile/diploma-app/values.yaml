@@ -1,0 +1,8 @@
+replicaCount: 1
+
+app_deployment:
+  image:
+    repository: chuckberry321/diploma-app
+    tag: latest
+
+namespace: ""
