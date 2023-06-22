@@ -1,73 +1,38 @@
-#!groovy
-
 pipeline {
-    agent any
-    triggers { pollSCM('* * * * *') }
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
-        timestamps()
+  agent any
+  environment {
+    DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+  }
+  stages {
+    stage('Get last tag') {
+      steps {
+        script {
+          last_tag = sh(returnStdout: true, script: 'git tag --list --sort=-version:refname \"0*\" | head -n 1').trim()
+        }
+        echo "last_tag=$last_tag"
+      }
     }
-    environment {
-    BUILD_TAG_NAME = '$BUILD_NUMBER'
-    IMAGE_BASE = 'chuckberry321/diploma-app'
-    DOCKER_REPO_NAME = 'chuckberry321'
-    IMAGE_NAME = 'diploma-app'
-    CHART_NAME = 'diploma-app-chart'
+    stage('Docker Build') {
+      steps {
+        dir ('.') {
+          sh "docker build -t chuckberry321/diplomaapp:$last_tag ."
+        }
+      }
     }
-    stages {
-        stage('Docker Login') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'docker_cred', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    sh 'docker login -u $USERNAME --password $PASSWORD'
-                }
-            }
-        }
-        stage('Create Docker Image') {
-            when { triggeredBy 'SCMTrigger' }
-            steps {
-                dir ('.') {
-                	sh 'docker build -t $IMAGE_BASE:$BUILD_TAG_NAME .'
-                }
-            }
-        }
-        stage('Create Docker Image with Tag') {
-            when { buildingTag() }
-            steps {
-                dir ('.') {
-                	sh 'docker build -t $IMAGE_BASE:$TAG_NAME .'
-                }
-            }
-        }
-        stage('Docker Push') {
-            when { triggeredBy 'SCMTrigger' }
-            steps {
-                sh 'docker push $IMAGE_BASE:$BUILD_TAG_NAME'
-            }
-        }
-        stage('Create Push with Tag') {
-            when { buildingTag() }
-            steps {
-                dir ('.') {
-                	sh 'docker push $IMAGE_BASE:$TAG_NAME''
-                }
-            }
-        }
-        stage('Deploy App') {
-            when { buildingTag() }
-            steps {
-                sh 'helm upgrade app-prod wonder-app-chart --set image_frontend.tag=$TAG_NAME --install'
-            }
-        }
+    stage('Dockerhub login') {
+      steps {
+        sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+      }
     }
-    post {
-        // Clean after build
-        always {
-            cleanWs(cleanWhenNotBuilt: false,
-                    deleteDirs: true,
-                    disableDeferredWipeout: true,
-                    notFailBuild: true,
-                    patterns: [[pattern: '.gitignore', type: 'INCLUDE'],
-                               [pattern: '.propsfile', type: 'EXCLUDE']])
-        }
+    stage('Docker push') {
+      steps {
+        sh "docker push chuckberry321/diplomaapp:$last_tag"
+      }
     }
+    stage('deploy app via helm') {
+      steps {
+        sh "helm upgrade netology ./diplomaapp/ --set app_deployment.image.tag=$last_tag -n diplomaapp --kubeconfig ~/config"
+      }
+    }   
+  }
 }
