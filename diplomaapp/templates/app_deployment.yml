@@ -1,27 +1,28 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: diplomaapp-nginx-{{ .Release.Name }}
   labels:
-    app: diploma-app
-    release: {{ .Release.Name }}
-  name: diploma-app-{{ .Release.Name }}
+    app.kubernetes.io/name: diplomaapp-nginx
 spec:
-  replicas: 1
+  replicas: {{ .Values.app_deployment.replicaCount }}
   selector:
     matchLabels:
-      app: diploma-app
-      release: {{ .Release.Name }}
+      app.kubernetes.io/name: diplomaapp-nginx
   template:
     metadata:
       labels:
-        app: diploma-app
-        release: {{ .Release.Name }}
+        app.kubernetes.io/name: diplomaapp-nginx
     spec:
       containers:
-        - image: "{{ .Values.app_deployment.repository }}:{{ .Values.app_deployment.tag | default .Values.app_deployment.tag }}"
-          name: diploma-app
-          ports:
-            - containerPort: 80
-              name: http
-      restartPolicy: Always
+      - name: diplomaapp-nginx
+        image: {{ .Values.app_deployment.image.repository }}:{{ .Values.app_deployment.image.tag }}
+        resources:
+          requests:
+            memory: {{ .Values.app_deployment.resources.requests.memory }}
+            cpu: {{ .Values.app_deployment.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.app_deployment.resources.limits.memory }}
+            cpu: {{ .Values.app_deployment.resources.limits.cpu }}
+        ports:
+        - containerPort: 80
