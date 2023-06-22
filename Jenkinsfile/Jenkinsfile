@@ -26,7 +26,7 @@ pipeline {
     }
     stage('Docker push') {
       steps {
-        sh "docker push chuckberry321/diplomaapp:$last_tag"
+        sh "docker push chuckberry321/diplomaapp:last_tag"
       }
     }
     stage('deploy app via helm') {
