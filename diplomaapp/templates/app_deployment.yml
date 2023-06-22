@@ -19,7 +19,7 @@ spec:
         release: {{ .Release.Name }}
     spec:
       containers:
-        - image: "{{ .Values.app_deployment.repository }}:{{ .Values.app_deployment.tag | default .Values.image.tag }}"
+        - image: "{{ .Values.app_deployment.repository }}:{{ .Values.app_deployment.tag | default .Values.app_deployment.tag }}"
           name: diploma-app
           ports:
             - containerPort: 80
