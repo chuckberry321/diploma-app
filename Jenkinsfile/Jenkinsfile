@@ -15,7 +15,7 @@ pipeline {
     stage('Docker Build') {
       steps {
         dir ('.') {
-          sh "docker build -t chuckberry321/diplomaapp:$last_tag ."
+          sh "docker build -t chuckberry321/diplomaapp:last_tag ."
         }
       }
     }
