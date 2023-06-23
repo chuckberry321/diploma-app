@@ -7,7 +7,7 @@ pipeline {
     stage('Get last tag') {
       steps {
         script {
-          last_tag = sh(returnStdout: true, script: 'git tag --list --sort=-version:refname \"0*\" | head -n 1').trim()
+          last_tag = sh(returnStdout: true, script: 'git tag --list --sort=-version:refname " | head -n 1').trim()
         }
         echo "last_tag=$last_tag"
       }
