@@ -15,7 +15,7 @@ pipeline {
     stage('Docker Build') {
       steps {
         dir ('.') {
-          sh "docker build -t chuckberry321/diplomaapp:last_tag ."
+          sh "docker build -t chuckberry321/diplomaapp:${last_tag} ."
         }
       }
     }
@@ -26,12 +26,12 @@ pipeline {
     }
     stage('Docker push') {
       steps {
-        sh "docker push chuckberry321/diplomaapp:last_tag"
+        sh "docker push chuckberry321/diplomaapp:${last_tag}"
       }
     }
     stage('deploy app via helm') {
       steps {
-        sh "helm upgrade netology ./diplomaapp/ --set app_deployment.image.tag=last_tag -n test-app --kubeconfig ~/config"
+        sh "helm upgrade netology ./diplomaapp/ --set app_deployment.image.tag=${last_tag} -n test-app --kubeconfig ~/config"
       }
     }   
   }
